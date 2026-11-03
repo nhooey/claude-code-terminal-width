@@ -1,0 +1,12 @@
+{
+  "name": "terminal-width",
+  "version": "0.1.0",
+  "description": "Tells the model the terminal's width when it changes, so it writes tables that fit",
+  "author": {
+    "name": "Neil Hooey"
+  },
+  "homepage": "https://github.com/nhooey/claude-code-terminal-width",
+  "repository": "https://github.com/nhooey/claude-code-terminal-width",
+  "keywords": ["terminal", "width", "tables"],
+  "types": "./types/index.d.ts"
+}

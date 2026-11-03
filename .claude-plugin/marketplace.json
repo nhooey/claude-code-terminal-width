@@ -1,0 +1,14 @@
+{
+  "name": "claude-code-terminal-width",
+  "description": "The terminal-width mod: tells Claude Code's model how wide the terminal is.",
+  "owner": {
+    "name": "Neil Hooey"
+  },
+  "plugins": [
+    {
+      "name": "terminal-width",
+      "source": "./",
+      "description": "Tells the model the terminal's width when it changes, so it writes tables that fit."
+    }
+  ]
+}
