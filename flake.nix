@@ -12,12 +12,19 @@
       url = "github:nhooey/agent-skill-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
     { flake-parts, systems, ... }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import systems;
+      # Sets `formatter` to treefmt and adds a `checks.treefmt` that fails
+      # `nix flake check` on unformatted files.
+      imports = [ inputs.treefmt-nix.flakeModule ];
       perSystem =
         { pkgs, ... }:
         let
@@ -47,7 +54,10 @@
               ${devshellSkills.startup}
             '';
           };
-          formatter = pkgs.nixfmt;
+          treefmt = {
+            projectRootFile = "flake.nix";
+            programs.nixfmt.enable = true;
+          };
         };
     };
 }

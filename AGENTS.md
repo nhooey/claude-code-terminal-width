@@ -6,4 +6,4 @@ A Claude Code mod that tells the model the terminal's width. Before a prompt goe
 
 - `nix develop` gives TypeScript and installs the project's skills into `.agents/skills/` from the `skills-devshell/` sub-flake.
 - `nix run .#check` runs `claude plugin validate`, `claude plugin test` and `tsc`, with the `claude` on your `PATH`. `tsc` is skipped until Claude Code has loaded the mod once and written its API types to `.claude-plugin/types/`.
-- `nix flake check` and `nix fmt` check and format the flake.
+- `nix fmt` formats the repository through treefmt, and `nix flake check` fails on anything unformatted. Neither runs the plugin test or `tsc`, which need the `claude` on your `PATH`.
