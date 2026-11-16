@@ -15,4 +15,4 @@ It draws nothing and changes nothing else.
 
 ## Develop
 
-`nix develop` gives a shell with `mod`, the repository's tool. `mod check` runs `mod validate`, `mod test` and `mod typecheck`, which wrap `claude plugin validate`, `claude plugin test` and `tsc`; `mod --help` lists them. It uses the `claude` on your `PATH`, and `mod typecheck` needs the API types Claude Code writes to `.claude-plugin/types/` the first time it loads the mod. Outside the shell, `nix run .#mod -- check` does the same.
+`nix develop` gives a shell with `mod`, the repository's tool. `mod check` runs `mod validate`, `mod test` and `mod typecheck`, which wrap `claude plugin validate`, `claude plugin test` and `tsc`; `mod --help` lists them. It uses the `claude` on your `PATH`, and `mod typecheck` needs the API types Claude Code writes to `.claude-plugin/types/` the first time it loads the mod. Outside the shell, `nix run .#mod -- check` does the same. `menu` lists the shell's other commands, such as `fmt` and `check`, which runs `nix flake check`.

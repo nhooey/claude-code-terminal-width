@@ -5,9 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
-    # The builder library, not a skill: its `devshellSkillsHook` gives the
-    # dev shell's startup line. The skills live in the `skills-devshell/`
-    # sub-flake, run on entry, so this flake carries no skill inputs.
+    # The builder library, not a skill: its `devshellSkills` module gives
+    # numtide/devshell with the menu, the skills startup and the standard
+    # commands. The skills live in the `skills-devshell/` sub-flake, run on
+    # entry, so this flake carries no skill inputs.
     agent-skill-flake = {
       url = "github:nhooey/agent-skill-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -22,13 +23,19 @@
     { flake-parts, systems, ... }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = import systems;
-      # Sets `formatter` to treefmt and adds a `checks.treefmt` that fails
-      # `nix flake check` on unformatted files.
-      imports = [ inputs.treefmt-nix.flakeModule ];
+      imports = [
+        # numtide/devshell, a motd pointing at `menu`, the startup that
+        # installs skills-devshell/'s skills into .agents/skills/, and the
+        # `check`, `fmt`, `update-flake` and skills commands.
+        inputs.agent-skill-flake.flakeModules.devshellSkills
+        # Sets `formatter` to treefmt and adds a `checks.treefmt` that fails
+        # `nix flake check` on unformatted files.
+        inputs.treefmt-nix.flakeModule
+      ];
+      agent-skill-flake.devshellSkills.name = "terminal-width";
       perSystem =
         { pkgs, ... }:
         let
-          devshellSkills = inputs.agent-skill-flake.lib.devshellSkillsHook { };
           # The repository's one command-line tool; `mod --help` lists its
           # commands. claude itself is unfree and changes daily, so it comes
           # from PATH.
@@ -47,18 +54,18 @@
             PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ${./scripts} -p 'test_*.py'
             touch "$out"
           '';
-          devShells.default = pkgs.mkShell {
-            packages = [
-              pkgs.typescript
-              mod
+          devshells.default = {
+            # For editors; mod brings its own tsc.
+            packages = [ pkgs.typescript ];
+            # Concatenated onto the module's commands in `menu`.
+            commands = [
+              # dev
+              {
+                category = "dev";
+                package = mod;
+                help = "Validate, test and type-check the mod; mod --help lists its commands";
+              }
             ];
-            # Install, update and sweep skills-devshell/'s skills into
-            # .agents/skills/. The hook expects numtide/devshell's $PRJ_ROOT.
-            shellHook = ''
-              PRJ_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-              export PRJ_ROOT
-              ${devshellSkills.startup}
-            '';
           };
           treefmt = {
             projectRootFile = "flake.nix";
