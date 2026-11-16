@@ -29,22 +29,28 @@
         { pkgs, ... }:
         let
           devshellSkills = inputs.agent-skill-flake.lib.devshellSkillsHook { };
-          # claude itself is unfree and changes daily, so it comes from PATH.
-          check = pkgs.writeShellApplication {
-            name = "check";
-            runtimeInputs = [ pkgs.typescript ];
-            text = builtins.readFile ./scripts/check.sh;
+          # The repository's one command-line tool; `mod --help` lists its
+          # commands. claude itself is unfree and changes daily, so it comes
+          # from PATH.
+          mod = pkgs.writeShellApplication {
+            name = "mod";
+            runtimeInputs = [
+              pkgs.python3
+              pkgs.typescript
+            ];
+            text = ''exec python3 ${./scripts/mod.py} "$@"'';
           };
         in
         {
-          apps.check = {
-            type = "app";
-            program = "${check}/bin/check";
-          };
+          packages.mod = mod;
+          checks.mod-tests = pkgs.runCommand "mod-tests" { nativeBuildInputs = [ pkgs.python3 ]; } ''
+            PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s ${./scripts} -p 'test_*.py'
+            touch "$out"
+          '';
           devShells.default = pkgs.mkShell {
             packages = [
               pkgs.typescript
-              check
+              mod
             ];
             # Install, update and sweep skills-devshell/'s skills into
             # .agents/skills/. The hook expects numtide/devshell's $PRJ_ROOT.
