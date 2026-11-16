@@ -11,6 +11,7 @@ import io
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import mod
 
@@ -113,6 +114,67 @@ class RunStepsTest(unittest.TestCase):
 
     def test_a_dry_run_of_check_without_types_passes(self):
         self.assertEqual(self.run_quietly(mod.plan("check", False)), mod.EXIT_OK)
+
+
+class MainTest(unittest.TestCase):
+    """The exit statuses `mod --help` promises, through main()."""
+
+    def main_quietly(self, *argv: str):
+        stderr = io.StringIO()
+        with contextlib.redirect_stderr(stderr):
+            status = mod.main(argv)
+        return status, stderr.getvalue()
+
+    def mod_root(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name).resolve()
+        (root / mod.MANIFEST).parent.mkdir()
+        (root / mod.MANIFEST).write_text("{}")
+        return root
+
+    def test_no_manifest_is_a_usage_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            status, err = self.main_quietly("-C", tmp, "-n", "validate")
+        self.assertEqual(status, mod.EXIT_USAGE)
+        self.assertIn(str(mod.MANIFEST), err)
+
+    def test_a_program_missing_from_path_is_not_found(self):
+        root = self.mod_root()
+        with mock.patch.object(mod.shutil, "which", lambda _: None):
+            status, err = self.main_quietly("-C", str(root), "validate")
+        self.assertEqual(status, mod.EXIT_NOT_FOUND)
+        self.assertIn("not on PATH: claude", err)
+
+    def test_a_dry_run_needs_nothing_on_path_and_prints_each_command(self):
+        root = self.mod_root()
+        with mock.patch.object(mod.shutil, "which", lambda _: None):
+            status, err = self.main_quietly("-C", str(root), "-n", "check")
+        self.assertEqual(status, mod.EXIT_OK)
+        self.assertIn("mod validate: claude plugin validate .", err)
+        self.assertIn("mod test: claude plugin test .", err)
+        self.assertIn("mod typecheck: skipped", err)
+
+    def test_typecheck_without_types_fails(self):
+        root = self.mod_root()
+        status, err = self.main_quietly("-C", str(root), "-n", "typecheck")
+        self.assertEqual(status, mod.EXIT_FAILED)
+        self.assertIn("can't run", err)
+
+    def test_a_failed_step_stops_the_run_with_its_own_status(self):
+        root = self.mod_root()
+        calls = []
+
+        def run(argv, cwd):
+            calls.append((argv, cwd))
+            return mock.Mock(returncode=3)
+
+        with mock.patch.object(mod.shutil, "which", lambda p: f"/bin/{p}"), mock.patch.object(
+            mod.subprocess, "run", run
+        ):
+            status, _ = self.main_quietly("-C", str(root / ".claude-plugin"), "check")
+        self.assertEqual(status, 3)
+        self.assertEqual(calls, [(("claude", "plugin", "validate", "."), root)])
 
 
 if __name__ == "__main__":
