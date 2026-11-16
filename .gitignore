@@ -1,3 +1,9 @@
 # Laid by Claude Code when it loads the mod: this build's API types.
 /.claude-plugin/types/
 /result
+
+# Project-scope skill installs from `nix develop`'s startup hook; the
+# skills' preferences files beside them are the project's own.
+/.agents/skills/*
+!/.agents/skills/*.preferences.md
+/.claude/skills/
