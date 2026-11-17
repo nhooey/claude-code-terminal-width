@@ -11,32 +11,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Every input below this divider is a skill source. Each follows
+    # The one skill source: skillspkgs' per-family combinations. It follows
     # `nixpkgs` but not `agent-skill-flake`, so it keeps its own compatible
     # builder.
-
-    coding-agent-skills = {
-      url = "github:nhooey/coding-agent-skills";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    document-skills = {
-      url = "github:nhooey/document-skills";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    git-skills = {
-      url = "github:nhooey/git-skills";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    nix-skills = {
-      url = "github:nhooey/nix-skills";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    shell-skills = {
-      url = "github:nhooey/shell-skills";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    writing-skills = {
-      url = "github:nhooey/writing-skills";
+    skillspkgs-combinations = {
+      url = "github:nhooey/skillspkgs?dir=sources/combinations";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -52,32 +31,10 @@
       systems = import inputs.systems;
       name = "terminal-width-devshell";
       sources = [
-        # Running a prompt as a headless session, keeping the scratchpad
-        # tidy, and the cross-repository plan's graph.
-        {
-          source = inputs.coding-agent-skills;
-          skills = [
-            "coding-agent-headless-in-checkout"
-            "coding-agent-plans-as-graph"
-            "coding-agent-scratchpad-scripts"
-          ];
-        }
-        # Markdown hygiene, for the README.
-        { source = inputs.document-skills; }
-        # Commits, branches and pull requests.
-        { source = inputs.git-skills; }
-        # Writing and bumping this flake.
-        {
-          source = inputs.nix-skills;
-          skills = [
-            "nix-flakes"
-            "nix-flake-recursive-bump-input-versions"
-          ];
-        }
-        # Safe shell commands: named deletes, PIDs, no machine-wide changes.
-        { source = inputs.shell-skills; }
-        # Prose hygiene, for the README and commit messages.
-        { source = inputs.writing-skills; }
+        # This repository is in the Claude Code tools family: the shared
+        # base, shipped defaults, changelogs and strict TypeScript. No
+        # additions: the family covers this TypeScript mod.
+        { source = inputs.skillspkgs-combinations.combinations.claude-code-tools; }
       ];
     };
 }
